@@ -1,84 +1,37 @@
-# Boardly – Database Schema
+# Boardly database schema
 
-This document explains the database collections used in Boardly.
+Boardly uses MongoDB through Mongoose. The model names below map to the collections `users`, `boards`, `boardlists`, `boardmembers`, `tasks`, `comments`, and `activities`.
 
-## 1. Users Collection
+## Users
 
-Stores information about registered users.
+- `name`, `email` (unique, normalized to lowercase), `passwordHash` (bcrypt hash; never returned by the API), timestamps.
 
-- _id: Unique user ID
-- name: User's full name
-- email: User's email address
-- password: Encrypted password
-- avatar: User profile image
-- createdAt: Account creation date
+## Boards
 
-## 2. Boards Collection
+- `title`, `description`, `owner` (User reference), timestamps.
+- Owners can manage lists and invitations. Active members can view boards and collaborate on tasks.
 
-Stores project boards created by users.
+## Board lists
 
-- _id: Unique board ID
-- title: Board name
-- description: Board description
-- owner: ID of the board owner
-- createdAt: Board creation date
+- `board`, `title`, `position`, and a workflow `status` (`todo`, `in-progress`, or `done`). New boards start with To do, In progress, and Done. Older boards receive those lists the first time their task list is opened.
+- Additional lists are supported. Their workflow status defaults to `todo`.
 
-## 3. BoardMembers Collection
+## Board members
 
-Stores information about users who are members of a board.
+- `board`, `user` (empty while the invite is pending), `invitedEmail`, `role`, `status`, `invitedBy`, hashed invite code, expiry, and `joinedAt`.
+- Invitations are created by the board owner and shared manually. The invite code expires after seven days and can only be accepted by an account with the invited email.
 
-- _id: Unique membership ID
-- board: ID of the board
-- user: ID of the user
-- invitedEmail: Email of the invited person
-- role: Owner or Member
-- status: Pending or Active
-- invitedBy: ID of the person who sent the invitation
-- joinedAt: Date the member joined
+## Tasks
 
-## 4. Lists Collection
+- `board`, `list`, `title`, `description`, `status`, optional `assignedTo` User, optional `dueDate`, optional `createdBy`, timestamps.
+- `status` remains for workflow compatibility; moving a task also updates its list.
 
-Stores task lists inside a board.
+## Comments
 
-- _id: Unique list ID
-- board: ID of the board
-- title: List name (To Do, In Progress, Done)
-- position: Order of the list
-- createdAt: List creation date
+- `board`, `task`, `authorName`, `text`, and timestamps. The author name comes from the signed-in account.
 
-## 5. Cards Collection
+## Activities
 
-Stores individual tasks inside lists.
+- `board`, `actorName`, `action`, `targetType`, `targetId`, `targetName`, and timestamps. The feed currently records task and comment activity.
 
-- _id: Unique card ID
-- board: ID of the board
-- list: ID of the list
-- title: Task title
-- description: Task details
-- assignedTo: IDs of assigned users
-- dueDate: Task deadline
-- position: Order of the card
-- createdBy: ID of the creator
-- createdAt: Card creation date
-
-## 6. Comments Collection
-
-Stores comments written on task cards.
-
-- _id: Unique comment ID
-- card: ID of the card
-- author: ID of the user who commented
-- text: Comment message
-- createdAt: Comment date
-
-## 7. Activities Collection
-
-Stores the activity history of a board.
-
-- _id: Unique activity ID
-- board: ID of the board
-- actor: ID of the user who performed the action
-- action: Description of the activity
-- targetType: Type of item (Card, List, or Board)
-- targetId: ID of the affected item
-- createdAt: Activity date
+Passwords use bcrypt. API sessions use signed bearer tokens configured with `JWT_SECRET` in `server/.env`.

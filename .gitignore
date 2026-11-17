@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Build output and logs
+client/dist/
+server/coverage/
+npm-debug.log*
+.DS_Store
+
+# Editor settings
+.vscode/*
+!.vscode/extensions.json
